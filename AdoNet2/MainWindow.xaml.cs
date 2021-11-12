@@ -16,6 +16,42 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+
+#region SQL_StoredProcedures
+//        CREATE PROCEDURE sp_UpdateAuthors
+//@Firstname NVARCHAR(15),
+//@AuthorId INT
+//AS
+//BEGIN
+//UPDATE Authors
+//SET FirstName = @Firstname  WHERE Id = @AuthorId
+//END
+
+
+
+//----------------------
+
+//CREATE PROCEDURE sp_InsertAuthor
+//@Firstname NVARCHAR(15),
+//@Lastname NVARCHAR(25),
+//@Id INT
+//AS
+//BEGIN
+//INSERT INTO Authors([Id], [FirstName], [LastName])
+//VALUES(@Id, @Firstname, @Lastname)
+//END
+
+
+//CREATE PROCEDURE sp_DeleteAuthor
+//@Id INT
+//AS
+//BEGIN
+//DELETE FROM Authors WHERE Id=@Id
+//END
+#endregion
+
+
+
 namespace AdoNet2
 {
     /// <summary>
@@ -38,45 +74,108 @@ namespace AdoNet2
 
         private void updateBtn_Click(object sender, RoutedEventArgs e)
         {
-           
-            string qry = "SELECT * FROM Authors";
-            DA= new SqlDataAdapter(qry, conn);
-            //Fill the DataSet
-            set = new DataSet();
-            DA.Fill(set, "Author");
-            //Update a row in DataSet Table
-            DataTable dt = set.Tables["Authors"];
-            dt.Rows[0]["FirstName"] = "xyz";
-
-            string sql = "UPDATE Authors SET FirstName = Lala where Id=1";
-            SqlDataAdapter adapter = new SqlDataAdapter();
-            
+            using (conn = new SqlConnection())
+            {
                 conn.ConnectionString = cs;
                 conn.Open();
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                //select the update command
-                adapter.UpdateCommand = cmd;
-                //update the data source
-                adapter.Update(set, "Authors");
-                MessageBox.Show("DataBase updated !! ");
+
+                SqlCommand sqlCommand = new SqlCommand("sp_UpdateAuthors", conn);
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+
+                var param1 = new SqlParameter();
+                param1.SqlDbType = SqlDbType.NVarChar;
+                param1.ParameterName = "@Firstname";
+                param1.Value = FirstnameTxtBox.Text;
+                sqlCommand.Parameters.Add(param1);
+
+                
+                var param2 = new SqlParameter();
+                param2.SqlDbType = SqlDbType.Int;
+                param2.ParameterName = "@AuthorId";
+                param2.Value = Int32.Parse(IdTxtBox.Text);
+                sqlCommand.Parameters.Add(param2);
+
+                sqlCommand.ExecuteNonQuery();
+
+
+                MessageBox.Show("Firstname Updated...");
+            }
             
-
-
-
-
-            
-
         }
         
 
         private void insertBtn_Click(object sender, RoutedEventArgs e)
         {
+            using (conn = new SqlConnection())
+            {
+                conn.ConnectionString = cs;
+                conn.Open();
 
+                SqlCommand sqlCommand = new SqlCommand("sp_InsertAuthor", conn);
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+
+                var param1 = new SqlParameter();
+                param1.SqlDbType = SqlDbType.Int;
+                param1.ParameterName = "@Id";
+                param1.Value = Int32.Parse(IdTxtBox.Text);
+                sqlCommand.Parameters.Add(param1);
+
+
+                var param2 = new SqlParameter();
+                param2.SqlDbType = SqlDbType.NVarChar;
+                param2.ParameterName = "@Firstname";
+                param2.Value = FirstnameTxtBox.Text;
+                sqlCommand.Parameters.Add(param2);
+
+                var param3 = new SqlParameter();
+                param3.SqlDbType = SqlDbType.NVarChar;
+                param3.ParameterName = "@Lastname";
+                param3.Value = LastNameTxtBox.Text;
+                sqlCommand.Parameters.Add(param3);
+
+               var result = sqlCommand.ExecuteNonQuery();
+
+                if (result != 0)
+                {
+                    MessageBox.Show("Author Inserted...");
+                }
+                else
+                {
+                    MessageBox.Show("Id is used. Select another Id...");
+                }
+
+                
+            }
         }
 
         private void deleteBtn_Click(object sender, RoutedEventArgs e)
         {
+            using (conn = new SqlConnection())
+            {
+                conn.ConnectionString = cs;
+                conn.Open();
 
+                SqlCommand sqlCommand = new SqlCommand("sp_DeleteAuthor", conn);
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+
+                var param1 = new SqlParameter();
+                param1.SqlDbType = SqlDbType.Int;
+                param1.ParameterName = "@Id";
+                param1.Value = Int32.Parse(IdTxtBox.Text);
+                sqlCommand.Parameters.Add(param1);                               
+
+                var result = sqlCommand.ExecuteNonQuery();
+
+                if (result != 0)
+                {
+                    MessageBox.Show("Author Deleted...");
+                }
+                else
+                {
+                    MessageBox.Show("Id is not found. Select another Id...");
+                }
+
+            }
         }
 
         private void showAllBtn_Click(object sender, RoutedEventArgs e)
@@ -92,5 +191,13 @@ namespace AdoNet2
                 MyDataGrid.ItemsSource = set.Tables[0].DefaultView;
             }
         }
+
+
+
+
+    
+
+
+
     }
 }
